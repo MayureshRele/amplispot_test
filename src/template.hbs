@@ -1,0 +1,28 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Document</title>
+  </head>
+  <body
+    style='overflow: hidden; margin: 0; padding: 0; background: rgb(238, 174, 202); background: radial-gradient(circle, rgba(238, 174, 202, 1) 0%, rgba(148, 187, 233, 1) 100%);'
+  >
+    <div
+      class='selector'
+      id='selector'
+      style="background-image: url('{{backgroundImageUrl}}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-attachment: fixed; height: 100vh;"
+    >
+      <img
+        src='{{profilePicUrl}}'
+        alt='profilePic'
+        style='width: 102px; height: 96px; position: absolute; top: 28px; left: 563px; border-radius: 15px;'
+      />
+      <div
+        class='info'
+        style='color: black; position: absolute; bottom: 24px; left: 631px; font-size: large; text-transform: capitalize; font-weight: 600;'
+      >
+        {{name}}
+      </div>
+    </div>
+  </body>
+</html>

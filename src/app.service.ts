@@ -2,44 +2,130 @@ import { Injectable } from '@nestjs/common';
 import { CreateImageDto } from './app.dto';
 import nodeHtmlToImage from 'node-html-to-image';
 import * as fs from 'fs';
+import { s3 } from './app.helper';
+import handlebars from 'handlebars';
+import { IUploadImageResponse } from './app.types';
 @Injectable()
 export class AppService {
   async getHello() {
     return 'Hello Word';
   }
 
+  // async createImage(
+  //   files: Express.Multer.File,
+  //   createImageDto: CreateImageDto,
+  // ): Promise<string> {
+  //   try {
+  //     const uploadedFile = await this.s3_upload(
+  //       files.buffer,
+  //       process.env.AWS_BUCKET,
+  //       files.originalname,
+  //       files.mimetype,
+  //     );
+
+  //     const templateSource = fs.readFileSync('src/template.hbs', 'utf8');
+
+  //     const template = handlebars.compile(templateSource);
+  //     const templateData = {
+  //       backgroundImageUrl: process.env.BACKGROUNDIMGURL,
+  //       profilePicUrl: uploadedFile.Location,
+  //       name: `${createImageDto.first_Name} ${createImageDto.last_Name}`,
+  //     };
+  //     const htmlText = template(templateData);
+
+  //     const result = await nodeHtmlToImage({
+  //       output: './image.png',
+  //       html: htmlText,
+  //       puppeteerArgs: {
+  //         defaultViewport: {
+  //           width: 1366,
+  //           height: 643,
+  //         },
+  //       },
+  //     });
+  //     if (result) {
+  //       fs.readFile('./image.png', async (err, data) => {
+  //         if (err) {
+  //           console.error('Error reading the file:', err);
+  //           return;
+  //         }
+  //         const finalImage = await this.s3_upload(
+  //           data,
+  //           process.env.AWS_BUCKET,
+  //           templateData.name,
+  //           'image/png',
+  //         );
+  //         if (finalImage) {
+  //           fs.unlink('./image.png', (err) => {
+  //             if (err) {
+  //               console.error('Error deleting the file:', err);
+  //               return err;
+  //             } else {
+  //               console.log('File deleted successfully.');
+  //             }
+  //           });
+  //         }
+  //         return {
+  //           file: finalImage.Location,
+  //         };
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.log(error, 'error');
+  //     return error;
+  //   }
+  // }
+
   async createImage(
     files: Express.Multer.File,
     createImageDto: CreateImageDto,
-  ): Promise<string> {
+  ): Promise<IUploadImageResponse> {
     try {
-      const uploadedFile = await this.saveFileToPublicFolder(files);
-      console.log(uploadedFile, 'this');
-      const htmlText = `<div style="border: 2px solid #000; border-radius: 0.125rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); margin: 0.75rem; padding: 0.5rem;">
-  <div class="profilePic" style="position: relative;">
-    <img
-      src="file.jpg"
-      alt="profilePic"
-      style="width: 135px; height: 135px; position: absolute; top: 41px; left: 291px; border-radius: 1rem;"
-    />
-  </div>
-  <img src="testImg.jpg" alt="testImg" style="/* Add your styles for the 'testImg' here */" />
-  <div class="relative">
-    <div class="info" style="position: absolute; bottom: 35px; left: 386px; font-size: 2rem; text-transform: capitalize; font-weight: 600; /* Add your desired text styles */">
-      First Name Last Name
-    </div>
-  </div>
-</div>
-`;
-      // await nodeHtmlToImage({
-      //   output: './image.png',
-      //   html: htmlText,
-      // });
+      // Upload the image to S3
+      const uploadedFile = await this.s3_upload(
+        files.buffer, // Use the buffer directly
+        process.env.AWS_BUCKET,
+        files.originalname,
+        files.mimetype,
+      );
 
-      return uploadedFile;
+      const templateSource = fs.readFileSync('src/template.hbs', 'utf8');
+      const template = handlebars.compile(templateSource);
+
+      const templateData = {
+        backgroundImageUrl: process.env.BACKGROUNDIMGURL,
+        profilePicUrl: uploadedFile.Location,
+        name: `${createImageDto.first_Name} ${createImageDto.last_Name}`,
+      };
+
+      const htmlText = template(templateData);
+
+      // Generate the image without saving it to the local file system
+      const imageBuffer = await nodeHtmlToImage({
+        html: htmlText,
+        puppeteerArgs: {
+          defaultViewport: {
+            width: 1366,
+            height: 643,
+          },
+        },
+        encoding: 'binary',
+      });
+
+      // Upload the generated image to S3
+      const finalImage = await this.s3_upload(
+        imageBuffer,
+        process.env.AWS_BUCKET,
+        templateData.name,
+        'image/png',
+      );
+
+      return {
+        file: finalImage.Location,
+      };
     } catch (error) {
-      console.log(error, 'error');
-      return error;
+      console.error(error, 'error');
+      throw error; // Re-throw the error for handling at a higher level
     }
   }
 
@@ -61,5 +147,21 @@ export class AppService {
         }
       });
     });
+  }
+  async s3_upload(file, bucket, name, mimetype) {
+    console.log({ file, bucket, name, mimetype });
+    const params = {
+      Bucket: bucket,
+      Key: String(name),
+      Body: file,
+      ACL: 'public-read',
+      ContentType: mimetype,
+      ContentDisposition: 'inline',
+      CreateBucketConfiguration: {
+        LocationConstraint: 'us-east-1',
+      },
+    };
+
+    return await s3.upload(params).promise();
   }
 }

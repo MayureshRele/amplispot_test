@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <script>
+    function myFunction() {
+      if (window.innerWidth !== undefined && window.innerHeight !== undefined) {
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+      } else {
+        var w = document.documentElement.clientWidth;
+        var h = document.documentElement.clientHeight;
+      }
+      var txt = 'Page size: width=' + w + ', height=' + h;
+      document.getElementById('demo').innerHTML = txt;
+    }
+  </script>
+  <body
+    onload="myFunction()"
+    style="
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      background: rgb(238, 174, 202);
+      background: radial-gradient(
+        circle,
+        rgba(238, 174, 202, 1) 0%,
+        rgba(148, 187, 233, 1) 100%
+      );
+    "
+  >
+    <div
+      style="
+        background-image: url('https://s3.amazonaws.com/mayures.test/pic.jpeg');
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed; /* Optional, to fix the background while scrolling */
+        height: 100vh;
+      "
+    >
+      <p style="position: absolute; color: black" id="demo">&nbsp;</p>
+      <img
+        src="http://localhost:3000/1691403440806.jpg"
+        alt="profilePic"
+        style="
+          width: 102px;
+          height: 96px;
+          position: absolute;
+          top: 28px;
+          left: 563px;
+          border-radius: 15px;
+        "
+      />
+      <div
+        class="info"
+        style="
+          color: black;
+          position: absolute;
+          bottom: 24px;
+          left: 631px;
+          font-size: large;
+          text-transform: capitalize;
+          font-weight: 600;
+        "
+      >
+        Mayuresh Rele
+      </div>
+    </div>
+  </body>
+</html>
