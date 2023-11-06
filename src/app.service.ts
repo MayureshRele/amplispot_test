@@ -93,7 +93,7 @@ export class AppService {
       ContentType: mimetype,
       ContentDisposition: 'inline',
       CreateBucketConfiguration: {
-        LocationConstraint: 'us-east-1',
+        LocationConstraint: process.env.AWS_REGION,
       },
     };
 
