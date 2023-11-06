@@ -16,14 +16,15 @@ export class AppService {
     createImageDto: CreateImageDto,
   ): Promise<IUploadImageResponse> {
     try {
+      const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
       // Upload the image to S3
       const uploadedFile = await this.s3_upload(
         files.buffer, // Use the buffer directly
-        process.env.AWS_BUCKET,
+        AWS_S3_BUCKET,
         files.originalname,
         files.mimetype,
       );
-
+      // Get Template Handlebar Template
       const templateSource = fs.readFileSync('src/template.hbs', 'utf8');
       const template = handlebars.compile(templateSource);
 
@@ -35,7 +36,7 @@ export class AppService {
 
       const htmlText = template(templateData);
 
-      // Generate the image without saving it to the local file system
+      // Generate the image
       const imageBuffer = await nodeHtmlToImage({
         html: htmlText,
         puppeteerArgs: {
@@ -48,9 +49,10 @@ export class AppService {
       });
 
       // Upload the generated image to S3
+
       const finalImage = await this.s3_upload(
         imageBuffer,
-        process.env.AWS_BUCKET,
+        AWS_S3_BUCKET,
         templateData.name,
         'image/png',
       );
